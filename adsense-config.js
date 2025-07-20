@@ -2,7 +2,7 @@
 class AdSenseManager {
     constructor() {
         this.adConfig = {
-            publisher: 'ca-pub-5375266680607919', // Your AdSense publisher ID
+            publisher: 'ca-pub-6011234789952502', // Your AdSense publisher ID
             slots: {
                 top: {
                     id: 'div-gpt-ad-top',
@@ -42,13 +42,7 @@ class AdSenseManager {
     }
 
     loadAdSense() {
-        // Load AdSense script
-        const script = document.createElement('script');
-        script.async = true;
-        script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
-        script.setAttribute('data-ad-client', this.adConfig.publisher);
-        document.head.appendChild(script);
-
+        // AdSense script is already loaded in HTML head
         // Initialize AdSense
         window.adsbygoogle = window.adsbygoogle || [];
     }
