@@ -1,0 +1,464 @@
+class WordleUnlimited {
+    constructor() {
+        this.WORD_LENGTH = 5;
+        this.MAX_GUESSES = 6;
+        this.currentRow = 0;
+        this.currentCol = 0;
+        this.gameOver = false;
+        this.targetWord = '';
+        this.guesses = [];
+        this.keyboardState = {};
+        
+        this.loadWordLists()
+            .then(() => {
+                this.initializeGame();
+                this.setupEventListeners();
+                this.loadGameStats();
+            })
+            .catch(error => {
+                console.error('Error loading word lists:', error);
+                this.showError('Failed to load word lists. Please refresh the page.');
+            });
+    }
+
+    async loadWordLists() {
+        try {
+            const [answersResponse, wordsResponse] = await Promise.all([
+                fetch('wordle-answers-alphabetical.txt'),
+                fetch('wordle-word-list.txt')
+            ]);
+
+            if (!answersResponse.ok || !wordsResponse.ok) {
+                throw new Error('Failed to fetch word lists');
+            }
+
+            const answersText = await answersResponse.text();
+            const wordsText = await wordsResponse.text();
+
+            this.answerList = answersText.trim().split('\n').map(word => word.trim().toLowerCase());
+            this.wordList = wordsText.trim().split('\n').map(word => word.trim().toLowerCase());
+
+            // Combine both lists for validation, remove duplicates
+            this.validWords = [...new Set([...this.answerList, ...this.wordList])];
+            
+            console.log(`Loaded ${this.answerList.length} answers and ${this.validWords.length} valid words`);
+        } catch (error) {
+            console.error('Error loading word lists:', error);
+            // Fallback to a small set of words if files can't be loaded
+            this.answerList = ['about', 'other', 'which', 'their', 'would', 'there', 'could', 'first', 'after', 'these'];
+            this.validWords = this.answerList;
+        }
+    }
+
+    initializeGame() {
+        this.createGrid();
+        this.selectRandomWord();
+        this.currentRow = 0;
+        this.currentCol = 0;
+        this.gameOver = false;
+        this.guesses = [];
+        this.keyboardState = {};
+        this.updateKeyboardDisplay();
+    }
+
+    createGrid() {
+        const grid = document.getElementById('game-grid');
+        grid.innerHTML = '';
+
+        for (let row = 0; row < this.MAX_GUESSES; row++) {
+            const rowElement = document.createElement('div');
+            rowElement.className = 'row';
+            rowElement.id = `row-${row}`;
+
+            for (let col = 0; col < this.WORD_LENGTH; col++) {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.id = `tile-${row}-${col}`;
+                rowElement.appendChild(tile);
+            }
+
+            grid.appendChild(rowElement);
+        }
+    }
+
+    selectRandomWord() {
+        const randomIndex = Math.floor(Math.random() * this.answerList.length);
+        this.targetWord = this.answerList[randomIndex].toUpperCase();
+        console.log('Target word:', this.targetWord); // Remove in production
+    }
+
+    setupEventListeners() {
+        // Keyboard event listeners
+        document.addEventListener('keydown', (e) => this.handleKeyPress(e));
+
+        // Virtual keyboard
+        document.querySelectorAll('.key').forEach(key => {
+            key.addEventListener('click', () => {
+                const keyValue = key.getAttribute('data-key');
+                this.handleVirtualKey(keyValue);
+            });
+        });
+
+        // Button event listeners
+        document.getElementById('new-game').addEventListener('click', () => this.newGame());
+        document.getElementById('how-to-play').addEventListener('click', () => this.showModal('how-to-play-modal'));
+        document.getElementById('stats').addEventListener('click', () => this.showStatsModal());
+
+        // Modal event listeners
+        document.querySelectorAll('.close').forEach(closeBtn => {
+            closeBtn.addEventListener('click', (e) => {
+                this.closeModal(e.target.closest('.modal').id);
+            });
+        });
+
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.closeModal(modal.id);
+                }
+            });
+        });
+
+        // Game over modal buttons
+        document.getElementById('play-again').addEventListener('click', () => {
+            this.closeModal('game-over-modal');
+            this.newGame();
+        });
+
+        document.getElementById('view-stats').addEventListener('click', () => {
+            this.closeModal('game-over-modal');
+            this.showStatsModal();
+        });
+    }
+
+    handleKeyPress(e) {
+        if (this.gameOver) return;
+
+        const key = e.key.toUpperCase();
+
+        if (key === 'ENTER') {
+            this.submitGuess();
+        } else if (key === 'BACKSPACE') {
+            this.deleteLetter();
+        } else if (/^[A-Z]$/.test(key)) {
+            this.addLetter(key);
+        }
+    }
+
+    handleVirtualKey(key) {
+        if (this.gameOver) return;
+
+        if (key === 'Enter') {
+            this.submitGuess();
+        } else if (key === 'Backspace') {
+            this.deleteLetter();
+        } else {
+            this.addLetter(key.toUpperCase());
+        }
+    }
+
+    addLetter(letter) {
+        if (this.currentCol < this.WORD_LENGTH) {
+            const tile = document.getElementById(`tile-${this.currentRow}-${this.currentCol}`);
+            tile.textContent = letter;
+            tile.classList.add('filled');
+            tile.classList.add('pop');
+            
+            setTimeout(() => tile.classList.remove('pop'), 100);
+            
+            this.currentCol++;
+        }
+    }
+
+    deleteLetter() {
+        if (this.currentCol > 0) {
+            this.currentCol--;
+            const tile = document.getElementById(`tile-${this.currentRow}-${this.currentCol}`);
+            tile.textContent = '';
+            tile.classList.remove('filled');
+        }
+    }
+
+    async submitGuess() {
+        if (this.currentCol !== this.WORD_LENGTH) {
+            this.showMessage('Not enough letters');
+            this.shakeRow(this.currentRow);
+            return;
+        }
+
+        const guess = this.getCurrentGuess().toUpperCase();
+        
+        if (!this.isValidWord(guess.toLowerCase())) {
+            this.showMessage('Not in word list');
+            this.shakeRow(this.currentRow);
+            return;
+        }
+
+        this.guesses.push(guess);
+        await this.revealRow();
+        this.updateKeyboardState(guess);
+        this.updateKeyboardDisplay();
+
+        if (guess === this.targetWord) {
+            this.gameOver = true;
+            this.updateStats(true, this.currentRow + 1);
+            setTimeout(() => {
+                this.showGameOverModal(true, this.currentRow + 1);
+            }, 1500);
+        } else if (this.currentRow === this.MAX_GUESSES - 1) {
+            this.gameOver = true;
+            this.updateStats(false, this.MAX_GUESSES + 1);
+            setTimeout(() => {
+                this.showGameOverModal(false, this.MAX_GUESSES + 1);
+            }, 1500);
+        } else {
+            this.currentRow++;
+            this.currentCol = 0;
+        }
+    }
+
+    getCurrentGuess() {
+        let guess = '';
+        for (let col = 0; col < this.WORD_LENGTH; col++) {
+            const tile = document.getElementById(`tile-${this.currentRow}-${col}`);
+            guess += tile.textContent;
+        }
+        return guess;
+    }
+
+    isValidWord(word) {
+        return this.validWords.includes(word);
+    }
+
+    async revealRow() {
+        const guess = this.getCurrentGuess();
+        const result = this.checkGuess(guess);
+
+        for (let col = 0; col < this.WORD_LENGTH; col++) {
+            const tile = document.getElementById(`tile-${this.currentRow}-${col}`);
+            
+            await new Promise(resolve => {
+                setTimeout(() => {
+                    tile.classList.add('flip');
+                    
+                    setTimeout(() => {
+                        tile.classList.add(result[col]);
+                        tile.classList.remove('flip');
+                        resolve();
+                    }, 300);
+                }, col * 100);
+            });
+        }
+    }
+
+    checkGuess(guess) {
+        const result = new Array(this.WORD_LENGTH).fill('absent');
+        const targetArray = this.targetWord.split('');
+        const guessArray = guess.split('');
+
+        // First pass: mark correct letters
+        for (let i = 0; i < this.WORD_LENGTH; i++) {
+            if (guessArray[i] === targetArray[i]) {
+                result[i] = 'correct';
+                targetArray[i] = null;
+                guessArray[i] = null;
+            }
+        }
+
+        // Second pass: mark present letters
+        for (let i = 0; i < this.WORD_LENGTH; i++) {
+            if (guessArray[i] && targetArray.includes(guessArray[i])) {
+                result[i] = 'present';
+                targetArray[targetArray.indexOf(guessArray[i])] = null;
+            }
+        }
+
+        return result;
+    }
+
+    updateKeyboardState(guess) {
+        const result = this.checkGuess(guess);
+        
+        for (let i = 0; i < guess.length; i++) {
+            const letter = guess[i];
+            const currentState = this.keyboardState[letter];
+            const newState = result[i];
+
+            // Priority: correct > present > absent
+            if (!currentState || 
+                (newState === 'correct') ||
+                (newState === 'present' && currentState !== 'correct')) {
+                this.keyboardState[letter] = newState;
+            }
+        }
+    }
+
+    updateKeyboardDisplay() {
+        document.querySelectorAll('.key').forEach(key => {
+            const letter = key.getAttribute('data-key');
+            if (letter && letter.length === 1) {
+                const state = this.keyboardState[letter.toUpperCase()];
+                key.classList.remove('correct', 'present', 'absent');
+                if (state) {
+                    key.classList.add(state);
+                }
+            }
+        });
+    }
+
+    shakeRow(rowIndex) {
+        const row = document.getElementById(`row-${rowIndex}`);
+        row.classList.add('shake');
+        setTimeout(() => row.classList.remove('shake'), 500);
+    }
+
+    showMessage(message) {
+        // Simple message display - could be enhanced with a toast notification
+        console.log(message);
+        
+        // Create temporary message element
+        const messageEl = document.createElement('div');
+        messageEl.textContent = message;
+        messageEl.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            z-index: 1000;
+            font-weight: bold;
+        `;
+        
+        document.body.appendChild(messageEl);
+        setTimeout(() => document.body.removeChild(messageEl), 2000);
+    }
+
+    newGame() {
+        this.initializeGame();
+    }
+
+    showModal(modalId) {
+        document.getElementById(modalId).style.display = 'block';
+    }
+
+    closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    showGameOverModal(won, guesses) {
+        const modal = document.getElementById('game-over-modal');
+        const title = document.getElementById('game-result-title');
+        const message = document.getElementById('game-result-message');
+        const wordReveal = document.getElementById('correct-word');
+
+        if (won) {
+            title.textContent = 'Congratulations!';
+            message.textContent = `You guessed the word in ${guesses} ${guesses === 1 ? 'try' : 'tries'}!`;
+        } else {
+            title.textContent = 'Game Over';
+            message.textContent = 'Better luck next time!';
+        }
+
+        wordReveal.textContent = this.targetWord;
+        this.showModal('game-over-modal');
+    }
+
+    showStatsModal() {
+        this.updateStatsDisplay();
+        this.showModal('stats-modal');
+    }
+
+    loadGameStats() {
+        const defaultStats = {
+            gamesPlayed: 0,
+            gamesWon: 0,
+            currentStreak: 0,
+            maxStreak: 0,
+            guessDistribution: [0, 0, 0, 0, 0, 0]
+        };
+
+        const saved = localStorage.getItem('wordle-unlimited-stats');
+        this.stats = saved ? JSON.parse(saved) : defaultStats;
+    }
+
+    updateStats(won, guesses) {
+        this.stats.gamesPlayed++;
+        
+        if (won) {
+            this.stats.gamesWon++;
+            this.stats.currentStreak++;
+            this.stats.maxStreak = Math.max(this.stats.maxStreak, this.stats.currentStreak);
+            this.stats.guessDistribution[guesses - 1]++;
+        } else {
+            this.stats.currentStreak = 0;
+        }
+
+        localStorage.setItem('wordle-unlimited-stats', JSON.stringify(this.stats));
+    }
+
+    updateStatsDisplay() {
+        const winPercentage = this.stats.gamesPlayed > 0 
+            ? Math.round((this.stats.gamesWon / this.stats.gamesPlayed) * 100) 
+            : 0;
+
+        document.getElementById('games-played').textContent = this.stats.gamesPlayed;
+        document.getElementById('win-percentage').textContent = winPercentage;
+        document.getElementById('current-streak').textContent = this.stats.currentStreak;
+        document.getElementById('max-streak').textContent = this.stats.maxStreak;
+
+        this.updateDistributionChart();
+    }
+
+    updateDistributionChart() {
+        const chartContainer = document.getElementById('distribution-chart');
+        chartContainer.innerHTML = '';
+
+        const maxCount = Math.max(...this.stats.guessDistribution, 1);
+
+        for (let i = 0; i < 6; i++) {
+            const count = this.stats.guessDistribution[i];
+            const percentage = (count / maxCount) * 100;
+
+            const bar = document.createElement('div');
+            bar.className = 'distribution-bar';
+
+            const label = document.createElement('div');
+            label.className = 'distribution-label';
+            label.textContent = i + 1;
+
+            const fill = document.createElement('div');
+            fill.className = 'distribution-fill';
+            fill.style.width = `${Math.max(percentage, 7)}%`;
+            fill.textContent = count;
+
+            bar.appendChild(label);
+            bar.appendChild(fill);
+            chartContainer.appendChild(bar);
+        }
+    }
+
+    showError(message) {
+        this.showMessage(message);
+    }
+}
+
+// Initialize the game when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    new WordleUnlimited();
+});
+
+// Service Worker registration for offline support (optional enhancement)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('SW registered: ', registration);
+            })
+            .catch(registrationError => {
+                console.log('SW registration failed: ', registrationError);
+            });
+    });
+}

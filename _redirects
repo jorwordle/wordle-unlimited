@@ -1,0 +1,13 @@
+# SEO-friendly redirects
+/wordle              /          301
+/game               /          301
+/play               /          301
+/unlimited          /          301
+/wordle-unlimited   /          301
+
+# Handle old URLs that might exist
+/home               /          301
+/index              /          301
+
+# Fallback for SPA routing
+/*                  /index.html 200
