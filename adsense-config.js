@@ -6,19 +6,19 @@ class AdSenseManager {
             slots: {
                 top: {
                     id: 'div-gpt-ad-top',
-                    slotId: '', // Add your top ad slot ID after AdSense approval
+                    slotId: '6783900119', // Top Banner Ad Slot ID
                     size: [[728, 90], [320, 50]], // Leaderboard and mobile banner
                     responsive: true
                 },
                 sidebar: {
                     id: 'div-gpt-ad-sidebar',
-                    slotId: '', // Add your sidebar ad slot ID after AdSense approval
+                    slotId: '5316789678', // Sidebar Ad Slot ID
                     size: [[300, 250], [300, 600]], // Medium rectangle and half page
                     responsive: true
                 },
                 bottom: {
                     id: 'div-gpt-ad-bottom',
-                    slotId: '', // Add your bottom ad slot ID after AdSense approval
+                    slotId: '9431294501', // Bottom Banner Ad Slot ID
                     size: [[728, 90], [320, 50]], // Leaderboard and mobile banner
                     responsive: true
                 }

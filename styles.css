@@ -137,6 +137,7 @@ main {
     gap: 5px;
     margin-bottom: 2rem;
     padding: 1rem;
+    touch-action: manipulation; /* Prevent double-tap zoom */
 }
 
 .row {
@@ -158,6 +159,7 @@ main {
     background-color: #121213;
     color: #ffffff;
     transition: all 0.3s ease;
+    touch-action: manipulation; /* Prevent double-tap zoom */
 }
 
 .tile.filled {
@@ -203,6 +205,7 @@ main {
 .game-keyboard {
     width: 100%;
     max-width: 500px;
+    touch-action: manipulation; /* Prevent double-tap zoom */
 }
 
 .keyboard-row {
@@ -225,6 +228,7 @@ main {
     flex: 1;
     max-width: 40px;
     transition: background-color 0.2s;
+    touch-action: manipulation; /* Prevent double-tap zoom */
 }
 
 .key:hover {
@@ -392,6 +396,42 @@ main {
 .word-reveal p {
     margin: 0;
     font-size: 1.1rem;
+}
+
+/* Word definition styles */
+.word-definition {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #3a3a3c;
+}
+
+.definition-loading {
+    color: #818384;
+    font-style: italic;
+}
+
+.definition-content h4 {
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.definition-content #definition-text {
+    color: #d7dadc;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+    text-align: left;
+}
+
+.definition-source {
+    color: #818384;
+    font-size: 0.8rem;
+    font-style: italic;
+}
+
+.definition-error {
+    color: #818384;
+    font-style: italic;
 }
 
 .game-over-actions {

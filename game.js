@@ -59,6 +59,61 @@ class WordleUnlimited {
         this.guesses = [];
         this.keyboardState = {};
         this.updateKeyboardDisplay();
+        this.easterEggSequence = [];
+        this.setupEasterEggs();
+    }
+
+    setupEasterEggs() {
+        // Secret key sequence to find Timmy: T-I-M-M-Y
+        document.addEventListener('keydown', (e) => {
+            if (this.gameOver) return;
+            
+            const key = e.key.toUpperCase();
+            this.easterEggSequence.push(key);
+            
+            // Keep only last 5 keys
+            if (this.easterEggSequence.length > 5) {
+                this.easterEggSequence.shift();
+            }
+            
+            // Check for TIMMY sequence
+            if (this.easterEggSequence.join('') === 'TIMMY') {
+                this.showTimmyDiscovery();
+                this.easterEggSequence = []; // Reset
+            }
+        });
+    }
+
+    showTimmyDiscovery() {
+        const messageEl = document.createElement('div');
+        messageEl.innerHTML = `
+            <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                        background: linear-gradient(45deg, #b59f3b, #538d4e); color: white; 
+                        padding: 2rem; border-radius: 12px; text-align: center; z-index: 2000;
+                        box-shadow: 0 10px 25px rgba(0,0,0,0.5); animation: bounceIn 0.8s;">
+                <h2 style="margin: 0 0 1rem 0;">🎉 SECRET DISCOVERED! 🎉</h2>
+                <p style="margin: 0 0 1rem 0;">You found the secret TIMMY code!</p>
+                <button onclick="window.open('/timmy.html', '_blank'); this.parentElement.parentElement.remove();" 
+                        style="background: white; color: #538d4e; border: none; padding: 0.75rem 1.5rem; 
+                               border-radius: 6px; font-weight: bold; cursor: pointer; margin-right: 1rem;">
+                    Meet Timmy! 🤓
+                </button>
+                <button onclick="this.parentElement.parentElement.remove();" 
+                        style="background: transparent; color: white; border: 1px solid white; 
+                               padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer;">
+                    Later
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(messageEl);
+        
+        // Auto-remove after 10 seconds
+        setTimeout(() => {
+            if (messageEl.parentElement) {
+                messageEl.remove();
+            }
+        }, 10000);
     }
 
     createGrid() {
@@ -363,7 +418,58 @@ class WordleUnlimited {
         }
 
         wordReveal.textContent = this.targetWord;
+        
+        // Load word definition
+        this.loadWordDefinition(this.targetWord.toLowerCase());
+        
         this.showModal('game-over-modal');
+    }
+
+    async loadWordDefinition(word) {
+        const loadingDiv = document.getElementById('definition-loading');
+        const contentDiv = document.getElementById('definition-content');
+        const errorDiv = document.getElementById('definition-error');
+        const definitionText = document.getElementById('definition-text');
+
+        // Reset display
+        loadingDiv.style.display = 'block';
+        contentDiv.style.display = 'none';
+        errorDiv.style.display = 'none';
+
+        try {
+            // Using Free Dictionary API
+            const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+            
+            if (!response.ok) {
+                throw new Error('Definition not found');
+            }
+
+            const data = await response.json();
+            const entry = data[0];
+            
+            // Get the first definition
+            let definition = 'Definition not available';
+            if (entry.meanings && entry.meanings.length > 0) {
+                const meaning = entry.meanings[0];
+                if (meaning.definitions && meaning.definitions.length > 0) {
+                    definition = meaning.definitions[0].definition;
+                    
+                    // Add part of speech if available
+                    if (meaning.partOfSpeech) {
+                        definition = `(${meaning.partOfSpeech}) ${definition}`;
+                    }
+                }
+            }
+
+            definitionText.textContent = definition;
+            loadingDiv.style.display = 'none';
+            contentDiv.style.display = 'block';
+
+        } catch (error) {
+            console.log('Failed to load definition:', error);
+            loadingDiv.style.display = 'none';
+            errorDiv.style.display = 'block';
+        }
     }
 
     showStatsModal() {

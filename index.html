@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Wordle Unlimited - Play Infinite Word Puzzles Daily | Free Online Game</title>
     <meta name="description" content="Play Wordle Unlimited for free! Enjoy endless word puzzles with no daily limits. Challenge yourself with infinite 5-letter word games. No downloads required.">
     <meta name="keywords" content="wordle unlimited, wordle game, word puzzle, 5 letter words, daily wordle, word game, free puzzle game">
@@ -62,6 +62,7 @@
                     <button id="new-game" class="btn">New Game</button>
                     <button id="how-to-play" class="btn">How to Play</button>
                     <button id="stats" class="btn">Statistics</button>
+                    <a href="daily-tips.html" class="btn" style="text-decoration: none;">🎯 Pro Tips</a>
                 </div>
             </div>
 
@@ -146,6 +147,8 @@
                 <a href="privacy.html">Privacy Policy</a>
                 <span>|</span>
                 <a href="terms.html">Terms of Service</a>
+                <span>|</span>
+                <span class="easter-egg-hint" style="color: #565758; cursor: help;" title="Try typing something special while playing...">🤫 Secrets</span>
             </div>
             <p>&copy; 2025 Wordle Unlimited. All rights reserved.</p>
         </div>
@@ -233,6 +236,19 @@
             <p id="game-result-message">You guessed the word!</p>
             <div class="word-reveal">
                 <p>The word was: <strong id="correct-word"></strong></p>
+                <div class="word-definition" id="word-definition">
+                    <div class="definition-loading" id="definition-loading" style="display: none;">
+                        <p>Loading definition...</p>
+                    </div>
+                    <div class="definition-content" id="definition-content" style="display: none;">
+                        <h4>Definition:</h4>
+                        <p id="definition-text"></p>
+                        <p class="definition-source">Source: Free Dictionary API</p>
+                    </div>
+                    <div class="definition-error" id="definition-error" style="display: none;">
+                        <p>Definition not available</p>
+                    </div>
+                </div>
             </div>
             <div class="game-over-actions">
                 <button id="play-again" class="btn">Play Again</button>
