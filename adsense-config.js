@@ -76,9 +76,19 @@ class AdSenseManager {
         if (config.responsive) {
             adDiv.setAttribute('data-ad-format', 'auto');
             adDiv.setAttribute('data-full-width-responsive', 'true');
+            // Ensure minimum width for responsive ads
+            adDiv.style.minWidth = '300px';
+            adDiv.style.width = '100%';
         } else {
             adDiv.style.width = config.size[0][0] + 'px';
             adDiv.style.height = config.size[0][1] + 'px';
+        }
+
+        // Ensure parent container has width
+        const parentContainer = placeholder.parentNode;
+        if (parentContainer) {
+            parentContainer.style.width = '100%';
+            parentContainer.style.display = 'block';
         }
 
         // Replace placeholder

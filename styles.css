@@ -40,6 +40,40 @@ header h1 {
     justify-content: center;
     margin: 1rem 0;
     min-height: 90px;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* AdSense responsive ads */
+.adsbygoogle {
+    display: block !important;
+    width: 100% !important;
+    min-width: 300px !important;
+}
+
+/* Additional mobile touch optimizations */
+* {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Allow text selection for content areas */
+.content-section, .modal-content, .word-reveal, .definition-content, .timmy-tips, .tips-container {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
+/* Extra mobile game area protection */
+.game-board, .game-container {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .ad-top {
