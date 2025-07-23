@@ -8,6 +8,7 @@ class WordleUnlimited {
         this.targetWord = '';
         this.guesses = [];
         this.keyboardState = {};
+        this.isSubmitting = false;
         
         this.loadWordLists()
             .then(() => {
@@ -58,6 +59,7 @@ class WordleUnlimited {
         this.gameOver = false;
         this.guesses = [];
         this.keyboardState = {};
+        this.isSubmitting = false;
         this.updateKeyboardDisplay();
         this.easterEggSequence = [];
         this.setupEasterEggs();
@@ -235,6 +237,10 @@ class WordleUnlimited {
     }
 
     async submitGuess() {
+        if (this.isSubmitting) {
+            return;
+        }
+
         if (this.currentCol !== this.WORD_LENGTH) {
             this.showMessage('Not enough letters');
             this.shakeRow(this.currentRow);
@@ -249,6 +255,7 @@ class WordleUnlimited {
             return;
         }
 
+        this.isSubmitting = true;
         this.guesses.push(guess);
         await this.revealRow();
         this.updateKeyboardState(guess);
@@ -270,6 +277,8 @@ class WordleUnlimited {
             this.currentRow++;
             this.currentCol = 0;
         }
+
+        this.isSubmitting = false;
     }
 
     getCurrentGuess() {
