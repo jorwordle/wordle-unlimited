@@ -1,0 +1,19 @@
+{
+    "name": "Wordle Unlimited Unblocked",
+    "short_name": "Wordle",
+    "description": "Play Wordle Unlimited Unblocked - Free word puzzle game that works everywhere",
+    "icons": [
+        {
+            "src": "/W.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "theme_color": "#538d4e",
+    "background_color": "#121213",
+    "display": "standalone",
+    "orientation": "portrait",
+    "scope": "/",
+    "start_url": "/"
+}
